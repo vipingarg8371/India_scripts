@@ -246,7 +246,7 @@ try {
     }
 } catch (Exception $e) {
     
-    die("Error while creating child orders : " . $e->getMessage());
+    die("Error while creating child orders  : " . $e->getMessage());
 } finally {
     // Even if one child is created, update the parent
     if (!empty($childOrderIds)) {
