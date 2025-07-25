@@ -144,6 +144,21 @@ try {
             'invoice_address'      => $originalOrder['invoice_address'],
             'invoice_city'         => $originalOrder['invoice_city'],
             'invoice_state'        => $originalOrder['invoice_state'],
+            'date_add'             =>$originalOrder['date_add'],
+            'currency'             =>$originalOrder['currency'],
+            'want_invoice'         =>$originalOrder['want_invoice'],
+            'extra_field_1'        =>$originalOrder['extra_field_1'],
+            'extra_field_2'        =>$originalOrder['extra_field_2'],
+            'payment_method'       =>$originalOrder['payment_method'],
+            'payment_method_cod'   =>$originalOrder['payment_method_cod'],
+            'delivery_company'     =>$originalOrder['delivery_company'],
+            'delivery_point_id'    =>$originalOrder['delivery_point_id'],
+            'delivery_point_name'  =>$originalOrder['delivery_point_name'],
+            'delivery_point_address'=>$originalOrder['delivery_point_address'],
+            'delivery_point_postcode'=>$originalOrder['delivery_point_postcode'],
+            'invoice_nip'=>$originalOrder['invoice_nip'],
+            'delivery_point_city'  =>$originalOrder['delivery_point_city'],
+            'paid'                 =>$originalOrder['paid'],
             'invoice_postcode'     => $originalOrder['invoice_postcode'],
             'invoice_country_code' => $originalOrder['invoice_country_code'],
             'delivery_fullname'    => $originalOrder['delivery_fullname'],
@@ -153,81 +168,102 @@ try {
             'delivery_postcode'    => $originalOrder['delivery_postcode'],
             'delivery_country_code' => $originalOrder['delivery_country_code'],
             'delivery_method'      => $originalOrder['delivery_method'],
-            'delivery_price'       => $originalOrder['delivery_price'],
-            'payment_method'       => $originalOrder['payment_method'],
-            'currency'             => $originalOrder['currency'],
+            'delivery_price' => ($originalOrder['payment_method_cod'] == 1) 
+    ? $originalOrder['delivery_price']/2
+    : $originalOrder['delivery_price'],
             'user_comments'        => $originalOrder['user_comments'],
+            'custom_extra_fields' => $originalOrder['custom_extra_fields'],
         ];
+try {
+    // Create Bhopal order
+    if (!empty($bhopalProducts)) {
+        $bhopalOrder = $newOrderBase;
+        $bhopalOrder['products'] = array_map(function($p) {
+            return [
+                'product_id'   => $p['product_id'],
+                'variant_id'   => $p['variant_id'],
+                'quantity'     => $p['quantity'],
+                'price_brutto' => $p['price_brutto'],
+                'name'         => $p['name'],
+                'weight'       => $p['weight'],
+                'ean'          => $p['ean'],
+                'order_product_id' => $p['order_product_id'],
+                'auction_id'   => $p['auction_id'],
+                'attributes'   => $p['attributes'],
+                'bundle_id'    => $p['bundle_id'],
+                'sku'          => $p['sku'],
+                'storage'      => $p['storage'],
+                'storage_id'   => $p['storage_id'],
+                'warehouse_id' => BHOPAL_WAREHOUSE,
+                'tax_rate'     => $p['tax_rate']
+            ];
+        }, $bhopalProducts);
+        $bhopalOrder['order_status_id'] = BHOPAL_STATUS;
 
-        // Create Bhopal order
-        if (!empty($bhopalProducts)) {
-            $bhopalOrder = $newOrderBase;
-            $bhopalOrder['products'] = array_map(function($p) {
-                return [
-                    'product_id'   => $p['product_id'],
-                    'variant_id'   => $p['variant_id'],
-                    'quantity'     => $p['quantity'],
-                    'price_brutto' => $p['price_brutto'],
-                    'name'         => $p['name'],
-                    'sku'          => $p['sku'],
-                    'warehouse_id' => BHOPAL_WAREHOUSE,
-                    'tax_rate'     => $p['tax_rate']
-                ];
-            }, $bhopalProducts);
-            $bhopalOrder['order_status_id'] = BHOPAL_STATUS;
-            
-            $result = callBaselinker('addOrder', $bhopalOrder);
-            if ($result['status'] !== 'SUCCESS') {
-                throw new Exception("Failed to create Bhopal order");
-            }
-            
-            // Store child order ID and update its parent field
-            $childOrderId = $result['order_id'];
-            $childOrderIds[] = $childOrderId;
-            updateOrderFields($childOrderId, [PARENT_ORDER_FIELD => $orderId]);
+        $result = callBaselinker('addOrder', $bhopalOrder);
+        if ($result['status'] !== 'SUCCESS') {
+            throw new Exception("Failed to create Bhopal order");
         }
 
-        // Create Lucknow order
-        if (!empty($lucknowProducts)) {
-            $lucknowOrder = $newOrderBase;
-            $lucknowOrder['products'] = array_map(function($p) {
-                return [
-                    'product_id'   => $p['product_id'],
-                    'variant_id'   => $p['variant_id'],
-                    'quantity'     => $p['quantity'],
-                    'price_brutto' => $p['price_brutto'],
-                    'name'         => $p['name'],
-                    'sku'          => $p['sku'],
-                    'warehouse_id' => LUCKNOW_WAREHOUSE,
-                    'tax_rate'     => $p['tax_rate']
-                ];
-            }, $lucknowProducts);
-            $lucknowOrder['order_status_id'] = LUCKNOW_STATUS;
-            
-            $result = callBaselinker('addOrder', $lucknowOrder);
-            if ($result['status'] !== 'SUCCESS') {
-                throw new Exception("Failed to create Lucknow order");
-            }
-            
-            // Store child order ID and update its parent field
-            $childOrderId = $result['order_id'];
-            $childOrderIds[] = $childOrderId;
-            updateOrderFields($childOrderId, [PARENT_ORDER_FIELD => $orderId]);
+        $childOrderId = $result['order_id'];
+        $childOrderIds[] = $childOrderId;
+        updateOrderFields($childOrderId, [PARENT_ORDER_FIELD => $orderId]);
+    }
+
+    // Create Lucknow order
+    if (!empty($lucknowProducts)) {
+        $lucknowOrder = $newOrderBase;
+        $lucknowOrder['products'] = array_map(function($p) {
+            return [
+                'product_id'   => $p['product_id'],
+                'variant_id'   => $p['variant_id'],
+                'quantity'     => $p['quantity'],
+                'price_brutto' => $p['price_brutto'],
+                'name'         => $p['name'],
+                'weight'       => $p['weight'],
+                'ean'          => $p['ean'],
+                'order_product_id' => $p['order_product_id'],
+                'auction_id'   => $p['auction_id'],
+                'attributes'   => $p['attributes'],
+                'bundle_id'    => $p['bundle_id'],
+                'sku'          => $p['sku'],
+                'storage'      => $p['storage'],
+                'storage_id'   => $p['storage_id'],
+                'warehouse_id' => LUCKNOW_WAREHOUSE,
+                'tax_rate'     => $p['tax_rate']
+            ];
+        }, $lucknowProducts);
+        $lucknowOrder['order_status_id'] = LUCKNOW_STATUS;
+
+        $result = callBaselinker('addOrder', $lucknowOrder);
+        if ($result['status'] !== 'SUCCESS') {
+            throw new Exception("Failed to create Lucknow order");
         }
 
-        // Update original order status
+        $childOrderId = $result['order_id'];
+        $childOrderIds[] = $childOrderId;
+        updateOrderFields($childOrderId, [PARENT_ORDER_FIELD => $orderId]);
+    }
+} catch (Exception $e) {
+    
+    die("Error while creating child orders: " . $e->getMessage());
+} finally {
+    // Even if one child is created, update the parent
+    if (!empty($childOrderIds)) {
         $statusResponse = callBaselinker('setOrderStatus', [
             'order_id' => $orderId,
             'status_id' => SPLIT_STATUS
         ]);
-        
+
         if ($statusResponse['status'] === 'SUCCESS') {
-            // Update parent order with child IDs
             updateOrderFields($orderId, [PARENT_ORDERS_FIELD => implode(',', $childOrderIds)]);
-            echo "Order split successfully. Parent order marked as split.";
+            echo "Order split partially/completely. Parent order marked as split.";
         } else {
-            throw new Exception("Failed to update parent order status");
+            die("Child orders created but failed to update parent order status.");
         }
+    }
+}
+
     }
 } catch (Exception $e) {
     die("Error: " . $e->getMessage());
