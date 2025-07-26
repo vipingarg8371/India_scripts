@@ -8,7 +8,7 @@ define('LUCKNOW_WAREHOUSE', 9000484);
 define('BHOPAL_STATUS', 3303);
 define('LUCKNOW_STATUS', 4077);
 define('SPLIT_STATUS', 4631);
-
+define('FAILED_ORDER_STATUS',5335);
 // Custom field codes
 define('PARENT_ORDERS_FIELD', 3178);  // For storing child order IDs in parent
 define('PARENT_ORDER_FIELD', 3179);   // For storing parent order ID in children
@@ -187,10 +187,7 @@ try {
                 'name'         => $p['name'],
                 'weight'       => $p['weight'],
                 'ean'          => $p['ean'],
-                'order_product_id' => $p['order_product_id'],
-                'auction_id'   => $p['auction_id'],
                 'attributes'   => $p['attributes'],
-                'bundle_id'    => $p['bundle_id'],
                 'sku'          => $p['sku'],
                 'storage'      => $p['storage'],
                 'storage_id'   => $p['storage_id'],
@@ -222,10 +219,7 @@ try {
                 'name'         => $p['name'],
                 'weight'       => $p['weight'],
                 'ean'          => $p['ean'],
-                'order_product_id' => $p['order_product_id'],
-                'auction_id'   => $p['auction_id'],
                 'attributes'   => $p['attributes'],
-                'bundle_id'    => $p['bundle_id'],
                 'sku'          => $p['sku'],
                 'storage'      => $p['storage'],
                 'storage_id'   => $p['storage_id'],
@@ -245,7 +239,10 @@ try {
         updateOrderFields($childOrderId, [PARENT_ORDER_FIELD => $orderId]);
     }
 } catch (Exception $e) {
-    
+      $failedOrderResponse = callBaselinker('setOrderStatus', [
+            'order_id' => $orderId,
+            'status_id' => FAILED_ORDER_STATUS
+        ]);
     die("Error while creating child orders: " . $e->getMessage());
 } finally {
     // Even if one child is created, update the parent
