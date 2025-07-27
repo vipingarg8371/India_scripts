@@ -26,37 +26,18 @@ function callBaselinker(string $method, array $parameters): array {
 
 try {
     // Step 1: Get child order_id from URL
-    $childOrderId = (int)($_GET['order_id'] ?? 0);
-    if (!$childOrderId) {
+    $parentOrderId = (int)($_GET['parent_order_id'] ?? 0);
+    $courierCode = ($_GET['courier_code']);
+    $packageNumber = ($_GET['package_number']);
+    if (!$parentOrderId) {
         throw new Exception("Missing order_id in URL");
     }
-
-    // Step 2: Get child order details
-    $orderResponse = callBaselinker('getOrders', ['order_id' => $childOrderId,'include_custom_extra_fields'=>true,
-'get_unconfirmed_orders'=>true]);
-    if ($orderResponse['status'] !== 'SUCCESS' || empty($orderResponse['orders'][0])) {
-        throw new Exception("Child order not found or API error");
+if (!$courierCode) {
+        throw new Exception("Missing courier_code in URL");
     }
-
-    $childOrder = $orderResponse['orders'][0];
-    
-    // Step 3: Extract parent order ID from custom field
-    $parentOrderId = $childOrder['custom_extra_fields'][3179] ?? 0;
-    if (!$parentOrderId) {
-        throw new Exception("Parent order ID not found in custom field 3179");
+    if (!$packageNumber) {
+        throw new Exception("Missing package_number in URL");
     }
-    
-    // Step 4: Get package details
-    $courierCode = $childOrder['delivery_package_module'] ?? 'other';
-    $packageNumber = $childOrder['delivery_package_nr'] ?? '';
-    
-    
-    
-    if (empty($packageNumber)) {
-        throw new Exception("Package number not found in child order");
-    }
-
-    // Step 5: Create package for parent order
     $createPackageResponse = callBaselinker('createPackageManual', [
         'order_id' => $parentOrderId,
         'courier_code' => $courierCode,
