@@ -37,8 +37,8 @@ $allOrders = [];
 $lastTimestamp = $startTimestamp;
 do {
     $params = [
-        'date_confirmed_from' => $lastTimestamp,
-        'get_unconfirmed_orders' => false
+        'date_confirmed_from' => $lastTimestamp
+        
     ];
     
     $response = callBaselinker('getOrders', $params, $apiToken);
@@ -63,7 +63,7 @@ $dailySales = [];
 $auctionIdMap = []; // Maps product_id to auction_id (Seller SKU)
 
 foreach ($allOrders as $order) {
-    $orderDate = (new DateTime())->setTimestamp($order['date_confirmed'])->setTimezone($timezone);
+    $orderDate = (new DateTime())->setTimestamp($order['date_add'])->setTimezone($timezone);
     $daysDiff = $orderDate->diff($startDate)->days;
     
     // Skip orders outside the 14-day window
